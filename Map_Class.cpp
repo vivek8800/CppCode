@@ -1,4 +1,4 @@
-#include <iostream>
+#include<iostream>
 #include<vector>
 #include<list>
 using namespace std;
@@ -7,9 +7,10 @@ template<typename K, typename V>
 class HashMap
 {
     int bucketSize;
+    int ElementCount;
+    double loadFactor;
     vector<list<pair<K, V>>> Table;
-    public:
-    
+
     /*
         std::hash<K> is a function object (functor) provided by C++ Standard Library that
         computes a hash code for objects of type K.
@@ -26,8 +27,29 @@ class HashMap
         size_t hashVal = std::hash<K>{}(key);
         return hashVal % bucketSize;
     }
+
+    void rehash()
+    {
+        int oldBucketSize = bucketSize;
+        bucketSize = 2*bucketSize;
+
+        vector<list<pair<K, V>>> NewTable(bucketSize);
+
+        for(int i=0; i<oldBucketSize; ++i)
+        {
+            for(auto &it: NewTable[i])
+            {
+                int index=getIndex(it.first);
+                NewTable[i].push_back(it);
+            }
+        }
+
+        Table=NewTable; // deep copy 
+    } 
+
+    public:
     
-    HashMap(int x):bucketSize(x)
+    HashMap(int x = 2):bucketSize(x), ElementCount(0), loadFactor(0.75)
     {
         Table.resize(bucketSize);   // resize the vector to have 'bucketSize' number of lists
         cout<<"HashMap created with bucket size: "<<bucketSize<<endl;
@@ -48,6 +70,13 @@ class HashMap
         cout<<"Key: "<<key<<"--> Value: "<<value<<" inserted in table at index: "<<index<<endl;
         
         Table[index].push_back({key, value});
+        ElementCount++;
+        
+        // check for resize of hash
+        if(ElementCount/bucketSize > loadFactor)
+        {
+            rehash();
+        }
     }
     
     void printMap()
@@ -103,7 +132,7 @@ class HashMap
 
 int main()
 {
-    HashMap<string, int> h(10);
+    HashMap<string, int> h;
     h.push("aaa",60);
     h.push("bbb", 90);
     h.push("ccc", 80);
